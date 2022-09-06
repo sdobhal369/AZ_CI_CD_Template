@@ -1,0 +1,56 @@
+parameters:
+  chartName: ''
+  valuesFileName: ''
+  dockerRegistry: ''
+  dockerRepositoryName: ''
+  kubernetesNamespace: ''
+  kubernetesReleaseName: ''
+  kubernetesServiceConnection: ''
+  helmVersion: ''
+  kubectlVersion: ''
+  force: false
+  install: true
+
+
+steps:
+
+- task: replacetokens@3
+  displayName: Replace tokens in Helm Values file
+  inputs:
+    targetFiles: '$(Pipeline.Workspace)/${{ parameters.valuesFileName }}/${{ parameters.valuesFileName }}'
+    encoding: 'auto'
+    writeBOM: true
+    escapeType: 'none'
+    verbosity: 'detailed'
+    actionOnMissing: 'fail'
+    actionOnNoFiles: 'fail'
+    keepToken: true
+
+- task: KubectlInstaller@0
+  displayName: Kubectl Install
+  inputs:
+    kubectlVersion: '${{ parameters.kubectlVersion }}'
+
+- task: HelmInstaller@1
+  displayName: Helm Install
+  inputs:
+    helmVersionToInstall: '${{ parameters.helmVersion }}'
+
+- task: HelmDeploy@0
+  displayName: Perform Helm Chart Upgrade
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceConnection: '${{ parameters.kubernetesServiceConnection }}'
+    namespace: '${{ parameters.kubernetesNamespace }}'
+    command: 'upgrade'
+    chartType: 'FilePath'
+    # Chart should be a pipeline artifact from the build stage. It will be downloaded to a folder named itself.
+    chartPath: '$(Pipeline.Workspace)/${{ parameters.chartName }}-$(Build.BuildNumber).tgz/${{ parameters.chartName }}-$(Build.BuildNumber).tgz'
+    releaseName: '${{ parameters.kubernetesReleaseName }}'
+    overrideValues: 'image.repository=${{ parameters.dockerRegistry }}/${{ parameters.dockerRepositoryName }},image.tag=$(Build.BuildNumber)'
+    # Values file should be a pipeline artifact from the build stage. It will be downloaded to a folder named itself.
+    valueFile: '$(Pipeline.Workspace)/${{ parameters.valuesFileName }}/${{ parameters.valuesFileName }}'
+    recreate: false
+    waitForExecution: false
+    force: ${{ parameters.force }}
+    install: ${{ parameters.install }}

@@ -1,0 +1,50 @@
+parameters:
+
+  dockerRegistryEndpoint: ''
+  dockerFile: ''
+  Api.K8S.RepositoryName: ''
+  imageName: ''
+  awsCredentials: ''
+  regionName: ''
+  
+  
+steps: 
+
+# Build Docker image.
+
+- task: Docker@0
+  displayName: "Build Docker image"
+  inputs:
+    dockerRegistryEndpoint: "${{ parameters.dockerRegistryEndpoint }}"
+    dockerFile: "${{ parameters.dockerFile }}"
+    imageName: "${{ parameters.imageName }}"
+    action: "Build an image"
+    additionalImageTags: "$(Build.BuildNumber)"
+    includeLatestTag: true
+   
+# Store Docker Image Name to a variable "dockerRegistry" for later use in task ECRPushImage.
+
+- task: Bash@3
+  displayName: "Store Docker Image Name As A Variable"
+  inputs:
+    targetType: "inline"
+    script: |
+      dockerRegistry=$(docker images | grep $(Build.BuildNumber) | awk '{print $1}')
+      echo "##vso[task.setvariable variable=dockerRegistry]$dockerRegistry"
+      echo $dockerRegistry
+      
+      
+# Push API docker image to AWS ECR.
+
+- task: ECRPushImage@1
+  displayName: "Push API docker image to AWS ECR"
+  inputs:
+    awsCredentials: "${{ parameters.awsCredentials }}"
+    regionName: "${{ parameters.regionName }}"
+    imageSource: "imagename"
+    sourceImageName: "$(dockerRegistry)"
+    sourceImageTag: "$(Build.BuildNumber)"
+    repositoryName: "$(Api.K8S.RepositoryName)"
+    pushTag: "$(Build.BuildNumber)"
+    autoCreateRepository: true
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))  #run for the main branch, if succeeding

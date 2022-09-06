@@ -1,0 +1,74 @@
+# Package and publish Helm chart (v3) pipeline artifacts.
+
+parameters:
+
+  chartName: ''
+  chartPath: ''
+  helmDir: ''
+  valuesFile: ''
+  valuesFileDir: ''
+  valuesFileName: ''
+  helmVersion: ''
+  artifactName: ''
+  
+
+steps:
+
+# Delete all existing Helm chart.
+
+- task: DeleteFiles@1
+  displayName: Clean up old charts
+  inputs:
+    contents: '*.tgz'
+
+# Helm-Tool Install.
+    
+- task: HelmInstaller@1
+  displayName: Install Helm
+  inputs:
+    helmVersionToInstall: '${{ parameters.helmVersion }}'
+
+# Helm chart Lint.
+
+- task: HelmDeploy@0
+  displayName: 'Helm lint ${{ parameters.chartName }}'
+  inputs:
+    command: lint
+    connectionType: None
+    arguments: '${{ parameters.chartPath }}'
+
+# Package the Helm chart.
+
+- task: HelmDeploy@0
+  displayName: Package Helm Chart
+  inputs:
+    command: 'package'
+    chartPath: '${{ parameters.helmDir }}/${{ parameters.chartName }}/'
+    chartVersion: '$(Build.BuildNumber)'
+    save: false
+    destination: $(Build.ArtifactStagingDirectory)/${{ parameters.artifactName }}
+    
+# Copy Helm Value file.
+
+- task: CopyFiles@2
+  displayName: 'Copy values file to Artifact Staging Directory'
+  inputs:
+    sourceFolder: ${{ parameters.chartPath }}
+    contents: ${{ parameters.valuesFile }}
+    targetFolder: $(Build.ArtifactStagingDirectory)/${{ parameters.artifactName }}
+
+# Publish the helm package as a Pipeline Artifact to be used in the deployment stages.
+
+- task: PublishPipelineArtifact@1
+  displayName: 'Publish Helm package'
+  inputs:
+    targetPath: '${{ parameters.chartName }}-$(Build.BuildNumber).tgz'
+    artifact: '${{ parameters.chartName }}-$(Build.BuildNumber).tgz'
+
+# Publish the helm values file as a Pipeline Artifact to be used in the deployment stages.
+
+- task: PublishPipelineArtifact@1
+  displayName: 'Publish Helm values file'
+  inputs:
+    targetPath: '${{ parameters.valuesFileDir }}/${{ parameters.valuesFileName }}'
+    artifact: '${{ parameters.valuesFileName }}'

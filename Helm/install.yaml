@@ -1,0 +1,28 @@
+# Helm Installation (v3)
+
+parameters:
+  desiredHelmVersion: ''
+
+steps:
+- bash: |
+    if [ -z "$DESIRED_HELM_VERSION" ]; then
+      echo "##vso[task.logissue type=error;]Missing template parameter \"solution\""
+      echo "##vso[task.complete result=Failed;]"
+    fi
+    
+    function get_helm_version {
+        helm version --short | sed 's/.*\(v[0-9]*\.[0-9]*\.[0-9]*\).*/\1/'
+    }
+    
+    if [[ "`get_helm_version`" == "${DESIRED_HELM_VERSION}" ]]; then
+        echo "Helm version `get_helm_version` is installed on the server"
+    else
+        echo "Installing helm ${DESIRED_HELM_VERSION} (to replace `get_helm_version`)"
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh -v ${DESIRED_HELM_VERSION}
+    fi
+  
+  env:
+    DESIRED_HELM_VERSION: ${{ parameters.desiredHelmVersion }}
+  displayName: Installing helm
