@@ -2,7 +2,7 @@ parameters:
 
   dockerRegistryEndpoint: ''
   dockerComposeFile: ''
-  Api.K8S.RepositoryName: ''
+  RepositoryName: ''
   awsCredentials: ''
   regionName: ''
   
@@ -19,7 +19,6 @@ steps:
     dockerComposeFile: "${{ parameters.dockerComposeFile }}"
     action: "Build Services"
     additionalImageTags: "$(Build.BuildNumber)"
-    includeLatestTag: true
     
   
 # Store Docker Image Name to a variable "dockerRegistry" for later use in task ECRPushImage.
@@ -44,7 +43,6 @@ steps:
     imageSource: "imagename"
     sourceImageName: "$(dockerRegistry)"
     sourceImageTag: "$(Build.BuildNumber)"
-    repositoryName: "$(Api.K8S.RepositoryName)"
+    repositoryName: "$(RepositoryName)"
     pushTag: "$(Build.BuildNumber)"
     autoCreateRepository: true
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))  #run for the main branch, if succeeding
