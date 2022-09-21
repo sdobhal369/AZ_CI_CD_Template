@@ -2,14 +2,15 @@ parameters:
   chartName: ''
   valuesFileName: ''
   dockerRegistry: ''
-  dockerRepositoryName: ''
+  RepositoryName: ''
   kubernetesNamespace: ''
   kubernetesReleaseName: ''
   kubernetesServiceConnection: ''
   helmVersion: ''
   kubectlVersion: ''
-  force: false
-  install: true
+  force: ''
+  install: ''
+  keepToken: ''
 
 
 steps:
@@ -19,12 +20,11 @@ steps:
   inputs:
     targetFiles: '$(Pipeline.Workspace)/${{ parameters.valuesFileName }}/${{ parameters.valuesFileName }}'
     encoding: 'auto'
-    writeBOM: true
     escapeType: 'none'
     verbosity: 'detailed'
     actionOnMissing: 'fail'
     actionOnNoFiles: 'fail'
-    keepToken: true
+    keepToken: ${{ parameters.install }}
 
 - task: KubectlInstaller@0
   displayName: Kubectl Install
@@ -47,10 +47,8 @@ steps:
     # Chart should be a pipeline artifact from the build stage. It will be downloaded to a folder named itself.
     chartPath: '$(Pipeline.Workspace)/${{ parameters.chartName }}-$(Build.BuildNumber).tgz/${{ parameters.chartName }}-$(Build.BuildNumber).tgz'
     releaseName: '${{ parameters.kubernetesReleaseName }}'
-    overrideValues: 'image.repository=${{ parameters.dockerRegistry }}/${{ parameters.dockerRepositoryName }},image.tag=$(Build.BuildNumber)'
+    overrideValues: 'image.repository=${{ parameters.dockerRegistry }}/${{ parameters.RepositoryName }},image.tag=$(Build.BuildNumber)'
     # Values file should be a pipeline artifact from the build stage. It will be downloaded to a folder named itself.
     valueFile: '$(Pipeline.Workspace)/${{ parameters.valuesFileName }}/${{ parameters.valuesFileName }}'
-    recreate: false
-    waitForExecution: false
     force: ${{ parameters.force }}
     install: ${{ parameters.install }}
