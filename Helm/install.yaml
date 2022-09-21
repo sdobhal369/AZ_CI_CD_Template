@@ -4,7 +4,14 @@ parameters:
   desiredHelmVersion: ''
 
 steps:
+
 - bash: |
+
+  env:
+    DESIRED_HELM_VERSION: ${{ parameters.desiredHelmVersion }}
+  
+  displayName: Installing helm
+  
     if [ -z "$DESIRED_HELM_VERSION" ]; then
       echo "##vso[task.logissue type=error;]Missing template parameter \"solution\""
       echo "##vso[task.complete result=Failed;]"
@@ -22,7 +29,3 @@ steps:
         chmod 700 get_helm.sh
         ./get_helm.sh -v ${DESIRED_HELM_VERSION}
     fi
-  
-  env:
-    DESIRED_HELM_VERSION: ${{ parameters.desiredHelmVersion }}
-  displayName: Installing helm
