@@ -4,7 +4,6 @@ parameters:
 
   chartName: ''
   helmDir: ''
-  valuesFile: ''
   valuesFileDir: ''
   valuesFileName: ''
   helmVersion: ''
@@ -52,7 +51,7 @@ steps:
   displayName: 'Copy values file to Artifact Staging Directory'
   inputs:
     sourceFolder: ${{ parameters.helmDir }}
-    contents: ${{ parameters.valuesFile }}
+    contents: ${{ parameters.valuesFileDir }}
     targetFolder: $(Build.ArtifactStagingDirectory)/${{ parameters.artifactName }}
 
 # Publish the helm package as a Pipeline Artifact to be used in the deployment stages.
