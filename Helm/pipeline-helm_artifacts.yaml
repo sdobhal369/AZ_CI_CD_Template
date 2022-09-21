@@ -3,7 +3,6 @@
 parameters:
 
   chartName: ''
-  chartPath: ''
   helmDir: ''
   valuesFile: ''
   valuesFileDir: ''
@@ -35,7 +34,7 @@ steps:
   inputs:
     command: lint
     connectionType: None
-    arguments: '${{ parameters.chartPath }}'
+    arguments: '${{ parameters.helmDir }}'
 
 # Package the Helm chart.
 
@@ -52,7 +51,7 @@ steps:
 - task: CopyFiles@2
   displayName: 'Copy values file to Artifact Staging Directory'
   inputs:
-    sourceFolder: ${{ parameters.chartPath }}
+    sourceFolder: ${{ parameters.helmDir }}
     contents: ${{ parameters.valuesFile }}
     targetFolder: $(Build.ArtifactStagingDirectory)/${{ parameters.artifactName }}
 
