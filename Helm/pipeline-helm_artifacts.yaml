@@ -45,7 +45,6 @@ steps:
     command: 'package'
     chartPath: '${{ parameters.helmDir }}/${{ parameters.chartName }}/'
     chartVersion: '$(Build.BuildNumber)'
-    save: false
     destination: $(Build.ArtifactStagingDirectory)/${{ parameters.artifactName }}
     
 # Copy Helm Value file.
